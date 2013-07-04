@@ -1,72 +1,75 @@
 #!/usr/bin/env ruby
 
 module SPSS2Latex
-  def self.convert(table)
-    t = table
-
-    t.gsub!(/^[^|].*?$\n/, "")
-    t.gsub!(/^$\n/, "")
-    t.gsub!(/(^\||\|$)/, "")
-
-    @hlines = t.scan(/^[\|\-|\s]+$/)
-    cols = @hlines.map{ |hline| hline.count("|") }.max
-
-    # parse hline with all columns to determine table structure
-    l = @hlines.select { |l| l.count("|") == cols }[0]
-    @col_widths = l.split("|").map{ |c| c.length }
-    @ncols = @col_widths.length
-
-    t = t.split("\n")[0..-2]
-
-    rows = []
-    t.each_with_index do |r, i|
-      if i % 2 == 0
-        rows[(i / 2).to_i] = { :s => r.split("|") }
-      else
-        rows[(i / 2).to_i][:c] = r.split("|")
-      end
-    end
-
-    @nrows = rows.length
-
-    out = []
-    rows.each_with_index do |row, i|
-      r = [] # next row to be added
-      nc = 0
-      ci = 0
-      begin
-        cspan = get_column_span(nc, row[:s][ci].length)
-        rspan = get_row_span(ci, i)
-        r.push(:rspan => rspan, :cspan => cspan, :content => row[:c][ci])
-        r[-1][:empty] = true if row[:s][ci].split("")[0] != "-"
-        nc += cspan
-        ci += 1
-      end while nc != @ncols
-      out.push(r)
-    end
-
-    lines = []
-    out.each_with_index do |row, ri|
-      l = "  "
-      row.each_with_index do |col, ci|
-        l += " & " unless ci == 0
-        unless col[:empty]
-          c = col[:content].strip
-          c = "\\multicolumn{#{col[:cspan]}}{c}{#{c}}" if col[:cspan] > 1
-          #c = "\\multirow{#{col[:rspan]}}{*}{#{c}}" if col[:rspan] > 1
-          l += c
-        end
-      end
-      lines.push l
-    end
-
-    out = "\\begin{tabular}{ #{"l " * @ncols}}\n"
-    out += lines.join(" \\\\\n")
-    out += "\n\\end{tabular}"
-    return out
+  def self.convert(tables)
+    tables.split(/^\s*$/).map { |t| convert_one(t) }.join("\n\n\n\n")
   end
   
   private
+    def self.convert_one(table)
+      t = table
+      t.gsub!(/^[^|].*?$\n/, "")
+      t.gsub!(/^$\n/, "")
+      t.gsub!(/(^\||\|$)/, "")
+
+      @hlines = t.scan(/^[\|\-|\s]+$/)
+      cols = @hlines.map{ |hline| hline.count("|") }.max
+
+      # parse hline with all columns to determine table structure
+      l = @hlines.select { |l| l.count("|") == cols }[0]
+      @col_widths = l.split("|").map{ |c| c.length }
+      @ncols = @col_widths.length
+
+      t = t.split("\n")[0..-2]
+
+      rows = []
+      t.each_with_index do |r, i|
+        if i % 2 == 0
+          rows[(i / 2).to_i] = { :s => r.split("|") }
+        else
+          rows[(i / 2).to_i][:c] = r.split("|")
+        end
+      end
+
+      @nrows = rows.length
+
+      out = []
+      rows.each_with_index do |row, i|
+        r = [] # next row to be added
+        nc = 0
+        ci = 0
+        begin
+          cspan = get_column_span(nc, row[:s][ci].length)
+          rspan = get_row_span(ci, i)
+          r.push(:rspan => rspan, :cspan => cspan, :content => row[:c][ci])
+          r[-1][:empty] = true if row[:s][ci].split("")[0] != "-"
+          nc += cspan
+          ci += 1
+        end while nc != @ncols
+        out.push(r)
+      end
+
+      lines = []
+      out.each_with_index do |row, ri|
+        l = "  "
+        row.each_with_index do |col, ci|
+          l += " & " unless ci == 0
+          unless col[:empty]
+            c = col[:content].strip
+            c = "\\multicolumn{#{col[:cspan]}}{c}{#{c}}" if col[:cspan] > 1
+            #c = "\\multirow{#{col[:rspan]}}{*}{#{c}}" if col[:rspan] > 1
+            l += c
+          end
+        end
+        lines.push l
+      end
+
+      out = "\\begin{tabular}{ #{"l " * @ncols}}\n"
+      out += lines.join(" \\\\\n")
+      out += "\n\\end{tabular}"
+      return out
+    end
+  
     def self.get_column_span(column_index, column_width)
       cws = @col_widths[column_index..-1]
       n = 0

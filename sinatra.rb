@@ -1,6 +1,12 @@
 require 'sinatra'
 require './spss2latex'
 
+
 get '/' do
-  "Hello world!"
+  erb :index
+end
+
+post '/' do
+  @latex = SPSS2Latex.convert(params[:tables])
+  erb :convert
 end
