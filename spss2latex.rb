@@ -50,22 +50,50 @@ module SPSS2Latex
       end
 
       lines = []
+      col_spans = Hash.new
       out.each_with_index do |row, ri|
-        l = "  "
+        l = []
         row.each_with_index do |col, ci|
-          l += " & " unless ci == 0
           unless col[:empty]
             c = col[:content].strip
             c = "\\multicolumn{#{col[:cspan]}}{c}{#{c}}" if col[:cspan] > 1
             #c = "\\multirow{#{col[:rspan]}}{*}{#{c}}" if col[:rspan] > 1
-            l += c
+            col_spans[[ci, ri]] = col[:cspan]
+            l.push c
+            (col[:cspan] - 1).times { l.push nil }
+          else
+            l.push ""
           end
         end
         lines.push l
       end
+      
+      # adjust cell widths to align &s
+      @max_lens = [0] * @ncols
+      [1,2,3,4,5,6,7,8,9,10].each do |span_limit|
+        lines.each_with_index do |l, li|
+          l.each_with_index do |c, ci|
+            span = col_spans[[ci, li]] || 1
+            if span <= span_limit && col_width_total(ci, span) < (c || "").length
+              @max_lens[ci] += c.length - col_width_total(ci, span)
+            end
+          end
+        end
+      end
+      lines = lines.each_with_index.map do |line, li|
+        line.each_with_index.map do |c, ci|
+          if c.nil?
+            nil
+          else
+            span = col_spans[[ci, li]] || 1
+            c.ljust(col_width_total(ci, span))
+          end
+        end.compact
+      end
 
-      out = "\\begin{tabular}{ #{"l " * @ncols}}\n"
-      out += lines.join(" \\\\\n")
+      out = "\\begin{tabular}{ #{"l " * @ncols}}\n  "
+      #out += lines.join(" \\\\\n")
+      out += lines.map { |l| l.join(" & ") }.join(" \\\\\n  ")
       out += "\n\\end{tabular}"
       return out
     end
@@ -89,6 +117,10 @@ module SPSS2Latex
         ind = @col_widths[0..column_index-1].inject{ |sum, x| sum + x } + column_index
       end
       return @hlines[row_index + 1..-1].map { |l| l.split("")[ind] }.join("").match(/^(\s*)/).to_s.length + 1
+    end
+    
+    def self.col_width_total(column_index, span)
+      @max_lens[column_index..column_index + span - 1].inject{ |sum, x| sum + x } + 3*(span - 1)
     end
 end
 
