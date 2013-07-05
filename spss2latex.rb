@@ -11,17 +11,10 @@ module SPSS2Latex
       t.gsub!(/^[^|].*?$\n/, "")
       t.gsub!(/^\s$\n/, "")
       t.gsub!(/(^\s*\||\|\s*$)/, "")
-
-      @hlines = t.scan(/^[\|\-|\s]+$/)
-      cols = @hlines.map{ |hline| hline.count("|") }.max
-
-      # parse hline with all columns to determine table structure
-      l = @hlines.select { |l| l.count("|") == cols }[0]
-      @col_widths = l.split("|").map{ |c| c.length }
-      @ncols = @col_widths.length
-
       t.gsub!(/(^[\s\|\-]*$\n?)/, "")
       t = t.split("\n")
+      
+      scan_table_layout(t)
 
       rows = []
       t.each_with_index do |r, i|
@@ -30,8 +23,6 @@ module SPSS2Latex
           #end
       end
 
-      @nrows = rows.length
-
       out = []
       rows.each_with_index do |row, i|
         r = [] # next row to be added
@@ -39,7 +30,7 @@ module SPSS2Latex
         ci = 0
         begin
           cspan = get_column_span(nc, row[ci].length)
-          rspan = get_row_span(ci, i)
+          rspan = 1 #get_row_span(ci, i)
           r.push(:rspan => rspan, :cspan => cspan, :content => row[ci])
           r[ci][:empty] = row[ci].strip.empty?
           nc += cspan
@@ -97,6 +88,17 @@ module SPSS2Latex
       return out
     end
   
+    def self.scan_table_layout(rows)
+      w = rows.map(&:length).max
+      layout = " " * w
+      w.times do |i|
+        layout[i] = "|" if rows.inject(false) { |ret, r| puts ret; ret || r[i] == "|"[0] }
+      end
+      @col_widths = layout.split("|").map(&:length)
+      @ncols = @col_widths.length
+      @nrows = rows.length
+    end
+    
     def self.get_column_span(column_index, column_width)
       cws = @col_widths[column_index..-1]
       n = 0
