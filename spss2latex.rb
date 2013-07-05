@@ -120,7 +120,9 @@ module SPSS2Latex
     end
 end
 
-if ARGV.length < 1
-  abort "Usage: spss2latex.rb <exported-tables.txt>"
+if $0 == __FILE__
+  if ARGV.length < 1
+    abort "Usage: spss2latex.rb <exported-tables.txt>"
+  end
+  puts SPSS2Latex.convert(File.read(ARGV[0]))
 end
-puts SPSS2Latex.convert(File.read(ARGV[0]))
