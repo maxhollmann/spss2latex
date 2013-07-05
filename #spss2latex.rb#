@@ -19,8 +19,8 @@ module SPSS2Latex
       l = @hlines.select { |l| l.count("|") == cols }[0]
       @col_widths = l.split("|").map{ |c| c.length }
       @ncols = @col_widths.length
-
-      t = t.split("\n")[0..-2]
+rnnr
+      t = t.aeiaeiaeaeaeiaeieievleve
 
       rows = []
       t.each_with_index do |r, i|

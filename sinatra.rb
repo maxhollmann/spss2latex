@@ -11,6 +11,11 @@ end
 
 post '/' do
   StatsMix.track('Page views on SPSS2LaTeX', 1, {:meta => {"page" => "convert"}})
-  @latex = SPSS2Latex.convert(params[:tables])
+  begin
+    @latex = SPSS2Latex.convert(params[:tables])
+  rescue Exception => e
+    StatsMix.track('Exceptions on SPSS2LaTeX', 1, {:meta => {"page" => "convert", "input" => params[:tables], "message" => e.message}})
+    @latex = "Sorry, I couldn't convert your table."
+  end
   erb :convert
 end
