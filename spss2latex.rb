@@ -17,6 +17,7 @@ module SPSS2Latex
 
       t = t.map { |r| r.split("|") }
 
+      # create table with appropriate spans
       out = []
       t.each_with_index do |row, i|
         newrow = [] # next row to be added
@@ -93,11 +94,7 @@ module SPSS2Latex
     
     def self.get_column_span(column_index, column_width)
       cws = @col_widths[column_index..-1]
-      n = 0
-      while column_width > n - 1
-        column_width -= cws[n]
-        n += 1
-      end
+      column_width -= cws[(n += 1) - 1] while column_width > (n ||= 0) - 1
       n
     end
 
