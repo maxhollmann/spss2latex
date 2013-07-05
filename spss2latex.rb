@@ -9,8 +9,8 @@ module SPSS2Latex
     def self.convert_one(table)
       t = table
       t.gsub!(/^[^|].*?$\n/, "")
-      t.gsub!(/^$\n/, "")
-      t.gsub!(/(^\||\|$)/, "")
+      t.gsub!(/^\s$\n/, "")
+      t.gsub!(/(^\s*\||\|\s*$)/, "")
 
       @hlines = t.scan(/^[\|\-|\s]+$/)
       cols = @hlines.map{ |hline| hline.count("|") }.max
@@ -124,9 +124,9 @@ module SPSS2Latex
     end
 end
 
-# if ARGV.length < 1
-#   abort "Usage: spss2latex.rb <exported-tables.txt>"
-# end
-# 
-# tables = File.read(ARGV[0]).split(/^\s*$/)
-# puts tables.map { |t| SPSS2Latex.convert(t) }.join("\n\n\n\n")
+if ARGV.length < 1
+  abort "Usage: spss2latex.rb <exported-tables.txt>"
+end
+
+tables = File.read(ARGV[0]).split(/^\s*$/)
+puts tables.map { |t| SPSS2Latex.convert(t) }.join("\n\n\n\n")
