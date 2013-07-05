@@ -2,20 +2,26 @@
 
 module SPSS2Latex
   def self.convert(tables)
-    tables.split(/^\s*$/).map { |t| convert_one(t) }.join("\n\n\n\n")
+    tables.split(/^\s*$/).map { |t| convert_spss(t) }.join("\n\n\n\n")
   end
   
   private
-    def self.convert_one(table)
+    def self.convert_spss(table)
+      convert_generic table, "|", [/(^[\s\|\-]*$\n?)/, /^[^|].*?$\n/]
+    end
+    
+    def self.convert_generic(table, column_sep = "|", ignore = [])
+      @column_sep_e = Regexp.escape(column_sep)
+      @column_sep = column_sep
+      
       t = table
-      t.gsub!(/^[^|].*?$\n/, "")
-      t.gsub!(/(^\s*\||\|\s*$)/, "")
-      t.gsub!(/(^[\s\|\-]*$\n?)/, "")
+      ignore.each { |ig| t.gsub!(ig, "") }
+      t.gsub!(/(^\s*#{@column_sep_e}|#{@column_sep_e}\s*$)/, "")
       t = t.split("\n")
       
       scan_table_layout(t)
 
-      t = t.map { |r| r.split("|") }
+      t = t.map { |r| r.split(@column_sep) }
 
       # create table with appropriate spans
       out = []
@@ -85,9 +91,9 @@ module SPSS2Latex
       w = rows.map(&:length).max
       layout = " " * w
       w.times do |i|
-        layout[i] = "|" if rows.inject(false) { |ret, r| ret || r[i] == "|"[0] }
+        layout[i] = @column_sep if rows.inject(false) { |ret, r| ret || r.index(@column_sep, i) == i }
       end
-      @col_widths = layout.split("|").map(&:length)
+      @col_widths = layout.split(@column_sep).map(&:length)
       @ncols = @col_widths.length
       @nrows = rows.length
     end
