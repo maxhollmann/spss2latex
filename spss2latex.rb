@@ -20,15 +20,14 @@ module SPSS2Latex
       @col_widths = l.split("|").map{ |c| c.length }
       @ncols = @col_widths.length
 
-      t = t.split("\n")[0..-2]
+      t.gsub!(/(^[\s\|\-]*$\n?)/, "")
+      t = t.split("\n")
 
       rows = []
       t.each_with_index do |r, i|
-        if i % 2 == 0
-          rows[(i / 2).to_i] = { :s => r.split("|") }
-        else
-          rows[(i / 2).to_i][:c] = r.split("|")
-        end
+        #if i % 2 == 1
+          rows[i] = r.split("|")
+          #end
       end
 
       @nrows = rows.length
@@ -39,10 +38,10 @@ module SPSS2Latex
         nc = 0
         ci = 0
         begin
-          cspan = get_column_span(nc, row[:s][ci].length)
+          cspan = get_column_span(nc, row[ci].length)
           rspan = get_row_span(ci, i)
-          r.push(:rspan => rspan, :cspan => cspan, :content => row[:c][ci])
-          r[-1][:empty] = true if row[:s][ci].split("")[0] != "-"
+          r.push(:rspan => rspan, :cspan => cspan, :content => row[ci])
+          r[ci][:empty] = row[ci].strip.empty?
           nc += cspan
           ci += 1
         end while nc != @ncols
@@ -70,7 +69,7 @@ module SPSS2Latex
       
       # adjust cell widths to align &s
       @max_lens = [0] * @ncols
-      [1,2,3,4,5,6,7,8,9,10].each do |span_limit|
+      10.times do |span_limit|
         lines.each_with_index do |l, li|
           l.each_with_index do |c, ci|
             span = col_spans[[ci, li]] || 1
@@ -124,9 +123,7 @@ module SPSS2Latex
     end
 end
 
-# if ARGV.length < 1
-#   abort "Usage: spss2latex.rb <exported-tables.txt>"
-# end
-# 
-# tables = File.read(ARGV[0]).split(/^\s*$/)
-# puts tables.map { |t| SPSS2Latex.convert(t) }.join("\n\n\n\n")
+if ARGV.length < 1
+  abort "Usage: spss2latex.rb <exported-tables.txt>"
+end
+puts SPSS2Latex.convert(File.read(ARGV[0]))
