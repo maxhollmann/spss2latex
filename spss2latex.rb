@@ -124,9 +124,9 @@ module SPSS2Latex
     end
 end
 
-if ARGV.length < 1
-  abort "Usage: spss2latex.rb <exported-tables.txt>"
-end
-
-tables = File.read(ARGV[0]).split(/^\s*$/)
-puts tables.map { |t| SPSS2Latex.convert(t) }.join("\n\n\n\n")
+# if ARGV.length < 1
+#   abort "Usage: spss2latex.rb <exported-tables.txt>"
+# end
+# 
+# tables = File.read(ARGV[0]).split(/^\s*$/)
+# puts tables.map { |t| SPSS2Latex.convert(t) }.join("\n\n\n\n")
