@@ -9,34 +9,26 @@ module SPSS2Latex
     def self.convert_one(table)
       t = table
       t.gsub!(/^[^|].*?$\n/, "")
-      t.gsub!(/^\s$\n/, "")
       t.gsub!(/(^\s*\||\|\s*$)/, "")
       t.gsub!(/(^[\s\|\-]*$\n?)/, "")
       t = t.split("\n")
       
       scan_table_layout(t)
 
-      rows = []
-      t.each_with_index do |r, i|
-        #if i % 2 == 1
-          rows[i] = r.split("|")
-          #end
-      end
+      t = t.map { |r| r.split("|") }
 
       out = []
-      rows.each_with_index do |row, i|
-        r = [] # next row to be added
+      t.each_with_index do |row, i|
+        newrow = [] # next row to be added
         nc = 0
-        ci = 0
-        begin
-          cspan = get_column_span(nc, row[ci].length)
+        row.each_with_index do |cell, ci|
+          cspan = get_column_span(nc, cell.length)
           rspan = 1 #get_row_span(ci, i)
-          r.push(:rspan => rspan, :cspan => cspan, :content => row[ci])
-          r[ci][:empty] = row[ci].strip.empty?
+          newrow.push(:rspan => rspan, :cspan => cspan, :content => cell, :empty => cell.strip.empty?)
           nc += cspan
-          ci += 1
-        end while nc != @ncols
-        out.push(r)
+          break if nc >= @ncols
+        end
+        out.push(newrow)
       end
       
       lines = []
@@ -92,7 +84,7 @@ module SPSS2Latex
       w = rows.map(&:length).max
       layout = " " * w
       w.times do |i|
-        layout[i] = "|" if rows.inject(false) { |ret, r| puts ret; ret || r[i] == "|"[0] }
+        layout[i] = "|" if rows.inject(false) { |ret, r| ret || r[i] == "|"[0] }
       end
       @col_widths = layout.split("|").map(&:length)
       @ncols = @col_widths.length
