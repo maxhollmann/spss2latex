@@ -17,3 +17,13 @@ input[type=submit] {
   height: 40px;
   font-size: 15px;
 }
+
+#footer {
+  padding-top: 0px;
+  color: #AAAAAA;
+  float: right;
+}
+
+#footer a {
+  color: #AAAAAA;
+}
